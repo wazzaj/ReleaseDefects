@@ -95,11 +95,7 @@ Ext.define('CustomApp', {
         app.releaseDate = app.down('#release-Date').getValue();
         console.log(app.releaseDate);
 
-        var storyFilter = Ext.create('Rally.data.wsapi.Filter', {
-            property: 'c_ReleaseDate',
-            operator: '!=',
-            value: app.releaseDate
-        });
+        var storyFilter = app._setStoryFilter(app.releaseDate);
 
         app.itemStore = Ext.create('Rally.data.wsapi.Store', {
             model: 'User Story',
@@ -113,8 +109,30 @@ Ext.define('CustomApp', {
                 },
                 scope: app    
             },
-            fetch: ['FormattedID','ObjectID', 'Name']
+            fetch: ['FormattedID','ObjectID', 'Name', 'c_ReleaseDate']
         });
+    },
+
+    _setStoryFilter: function(rDate) {
+
+    	console.log(rDate);
+
+    	var rFilter1 = Ext.create('Rally.data.wsapi.Filter', {
+            property: 'c_ReleaseDate',
+            operator: '>=',
+            value: rDate
+        });
+
+        var d = Ext.Date.add(rDate, Ext.Date.DAY, +1);
+        console.log(d);
+
+        var rFilter2 = Ext.create('Rally.data.wsapi.Filter', {
+            property: 'c_ReleaseDate',
+            operator: '<',
+            value: d
+        });
+
+        return rFilter1.and(rFilter2);
     },
 
     _processStories: function() {
@@ -126,8 +144,9 @@ Ext.define('CustomApp', {
             var item = record.get('ObjectID');
             var id = record.get('FormattedID');
             var name = record.get('Name');
+            var rdate = record.get('c_ReleaseDate');
 
-        	console.log(item, id, name);
+        	console.log(item, id, name, rdate);
         });
 
     },
