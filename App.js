@@ -95,7 +95,7 @@ Ext.define('CustomApp', {
         app.releaseDate = app.down('#release-Date').getValue();
         console.log(app.releaseDate);
 
-        var storyFilter = app._setStoryFilter(app.releaseDate);
+        var storyFilter = app._setStoryFilter(app.releaseDate, app.reportType);
 
         app.itemStore = Ext.create('Rally.data.wsapi.Store', {
             model: 'User Story',
@@ -113,9 +113,9 @@ Ext.define('CustomApp', {
         });
     },
 
-    _setStoryFilter: function(rDate) {
+    _setStoryFilter: function(rDate,aType) {
 
-    	console.log(rDate);
+    	console.log('Release Date: ', rDate, 'Report Type:', aType);
 
     	var rFilter1 = Ext.create('Rally.data.wsapi.Filter', {
             property: 'c_ReleaseDate',
@@ -132,7 +132,21 @@ Ext.define('CustomApp', {
             value: d
         });
 
-        return rFilter1.and(rFilter2);
+        if (aType === 'Defect') {
+        	var rFilter3 = Ext.create('Rally.data.wsapi.Filter', {
+            	property: 'Defects.ObjectID',
+            	operator: '!=',
+            	value: 'null'
+        	});
+        } else {
+            var rFilter3 = Ext.create('Rally.data.wsapi.Filter', {
+            	property: 'TestCases.ObjectID',
+            	operator: '!=',
+            	value: 'null'
+        	});	
+        }
+
+        return rFilter1.and(rFilter2).and(rFilter3);
     },
 
     _processStories: function() {
