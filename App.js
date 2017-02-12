@@ -37,10 +37,10 @@ Ext.define('CustomApp', {
         var app = this;
 
 		var reportOptions = Ext.create('Ext.data.Store', {
-    		fields: ['abbr', 'name'],
+    		fields: ['model', 'name'],
     		data : [
-       			{"abbr":"Defect", "name":"Defects"},
-        		{"abbr":"TestCase", "name":"Test Cases"}
+       			{"model":"Defect", "name":"Defects"},
+        		{"model":"Test Case", "name":"Test Cases"}
 	    		]
 		});
 
@@ -52,10 +52,10 @@ Ext.define('CustomApp', {
     		queryMode: 'local',
     		forceSelection: 'true',
     		displayField: 'name',
-    		valueField: 'abbr',
+    		valueField: 'model',
     		renderTo: Ext.getBody(),
     		listeners: {
-                select: app._loadData,
+                select: app._changeType,
                 scope: app
                 }                
 		});
@@ -86,13 +86,22 @@ Ext.define('CustomApp', {
         app.down('#filter-Box').add(releaseDateField);
     },
 
+    _changeType: function() {
+    	var app = this;
+
+    	if(app.resultsGrid) {
+        	app.remove(app.resultsGrid);
+        	app.resultsGrid = null;
+        }
+
+    	app._loadData();
+    },
+
     _loadData: function() {
         var app = this;
 
         app.reportType = app.down('#type-Filter').getValue();
-        console.log(app.reportType);
         app.releaseDate = app.down('#release-Date').getValue();
-        console.log(app.releaseDate);
 
         var storyFilter = app._setStoryFilter(app.releaseDate, app.reportType);
 
@@ -113,8 +122,6 @@ Ext.define('CustomApp', {
 
     _setStoryFilter: function(rDate,aType) {
 
-    	console.log('Release Date: ', rDate, 'Report Type:', aType);
-
     	var rFilter1 = Ext.create('Rally.data.wsapi.Filter', {
             property: 'c_ReleaseDate',
             operator: '>=',
@@ -122,7 +129,6 @@ Ext.define('CustomApp', {
         });
 
         var d = Ext.Date.add(rDate, Ext.Date.DAY, +1);
-        console.log(d);
 
         var rFilter2 = Ext.create('Rally.data.wsapi.Filter', {
             property: 'c_ReleaseDate',
@@ -156,11 +162,6 @@ Ext.define('CustomApp', {
 
         app.itemStore.each(function(record) {
             var item = record.get('ObjectID');
-            var id = record.get('FormattedID');
-            var name = record.get('Name');
-            var rdate = record.get('c_ReleaseDate');
-
-        	console.log(item, id, name, rdate);
 
         	storyList = app._setFilter(item, storyList);
 
@@ -174,12 +175,10 @@ Ext.define('CustomApp', {
         	if(app.resultsGrid) {
         		app.remove(app.resultsGrid);
         		app.resultsGrid = null;
-//        		app._showGrid();
         	}
         	return;
         }
 
-        console.log(storyList);
         app.reportStore = Ext.create('Rally.data.wsapi.Store', {
             model: app.reportType,
             autoLoad: true,
@@ -187,23 +186,28 @@ Ext.define('CustomApp', {
             limit: Infinity, 
             listeners: {
                 load: function(myStore, myData, success) {
-                	console.log('Deciding whether to show grid');
                 	if(!app.resultsGrid || app.resultsGrid === null) {
                     	app._showGrid();
                 	}
                 },
                 scope: app    
             },
-            fetch: ['FormattedID','ObjectID', 'Name']
+            fetch: ['FormattedID','ObjectID', 'Name', 'Owner', 'Project']
         });
 
     },
 
     _setFilter: function(story, cFilter) {
-		console.log(story, cFilter);
+    	var app = this;
+
+    	if(app.reportType === 'Defect') {
+    		var queryProp = 'Requirement.ObjectID';
+    	} else {
+    		var queryProp = 'WorkProduct.ObjectID';
+    	}
 
     	var dFilter = Ext.create('Rally.data.wsapi.Filter', {
-            property: 'Requirement.ObjectID',
+            property: queryProp,
             operator: '=',
             value: story
         });
@@ -218,24 +222,13 @@ Ext.define('CustomApp', {
     _showGrid: function() {
     	var app = this;
 
-//    	app.reportStore.each(function(record) {
-//            var item = record.get('ObjectID');
-//            var id = record.get('FormattedID');
-//            var name = record.get('Name');
-
-//        	console.log(item, id, name);
-//        });
-
-		console.log('Show Grid');
-
         app.resultsGrid = Ext.create('Rally.ui.grid.Grid', {
         	store: app.reportStore,
         	columnCfgs: [         // Columns to display; must be the same names specified in the fetch: above in the wsapi data store
-          		'FormattedID', 'Name', 'Requirement.FormattedID'
+          		'FormattedID', 'Name', 'Owner', 'Project'
         	]
       	});
 
       	app.add(app.resultsGrid);       // add the grid Component to the app-level Container (by doing this.add, it uses the app container)
-
     }
 });
