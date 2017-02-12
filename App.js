@@ -176,7 +176,7 @@ Ext.define('CustomApp', {
             listeners: {
                 load: function(myStore, myData, success) {
                 	console.log(myStore);
-                	if(!app.ResultsGrid) {
+                	if(!app.resultsGrid) {
                     	app._showGrid();
                 	}
                 },
