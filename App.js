@@ -105,7 +105,6 @@ Ext.define('CustomApp', {
             listeners: {
                 load: function(myStore, myData, success) {
                     app._processStories();
-//                    app._drawPieChart();
                 },
                 scope: app    
             },
@@ -132,14 +131,16 @@ Ext.define('CustomApp', {
             value: d
         });
 
+        var rFilter = '';
+
         if (aType === 'Defect') {
-        	var rFilter3 = Ext.create('Rally.data.wsapi.Filter', {
+        	rFilter3 = Ext.create('Rally.data.wsapi.Filter', {
             	property: 'Defects.ObjectID',
             	operator: '!=',
             	value: 'null'
         	});
         } else {
-            var rFilter3 = Ext.create('Rally.data.wsapi.Filter', {
+            rFilter3 = Ext.create('Rally.data.wsapi.Filter', {
             	property: 'TestCases.ObjectID',
             	operator: '!=',
             	value: 'null'
@@ -152,7 +153,7 @@ Ext.define('CustomApp', {
     _processStories: function() {
         var app = this;
 
-//        app._createArrayStore();
+		var storyList = '';
 
         app.itemStore.each(function(record) {
             var item = record.get('ObjectID');
@@ -161,143 +162,55 @@ Ext.define('CustomApp', {
             var rdate = record.get('c_ReleaseDate');
 
         	console.log(item, id, name, rdate);
+
+        	storyList = app._setFilter(item, storyList);
+
         });
 
-    },
-
-    _getPointsDifference: function(objid, uDate) {
-        var app = this;
-        var deferred = Ext.create('Deft.Deferred');
-
-        var uStore = Ext.create('Rally.data.lookback.SnapshotStore', {
+        console.log(storyList);
+        app.reportStore = Ext.create('Rally.data.wsapi.Store', {
+            model: app.reportType,
             autoLoad: true,
+            filters: storyList,
+            limit: Infinity, 
             listeners: {
-                scope: app,
-                load: function(uStore, uData, success) {
-                    if (uStore.getCount() === 0) {
-                        deferred.resolve(0);
-                    } else {
-                        uStore.each(function(record) {
-                            var points = record.get('AcceptedLeafStoryPlanEstimateTotal');
-                            deferred.resolve(points);
-                        }, app);
-                    }
-                }
-            },
-            fetch: ['Name', 'AcceptedLeafStoryPlanEstimateTotal'],
-            filters: [
-                {
-                    property: 'ObjectID',
-                    operator: '=',
-                    value: objid
+                load: function(myStore, myData, success) {
+                	console.log('Store Created');
+                	console.log(myStore);
+                    app._showGrid();
                 },
-                {
-                    property: '__At',
-                    value: uDate
-                }
-            ]
+                scope: app    
+            },
+            fetch: ['FormattedID','ObjectID', 'Name']
         });
-        return deferred.promise;
+
     },
 
-    _createArrayStore: function() {
-        var app = this;
+    _setFilter: function(story, cFilter) {
+		console.log(story, cFilter);
 
-        if (app.pointsStore) {
-            app.pointsStore.removeAll();
+    	var dFilter = Ext.create('Rally.data.wsapi.Filter', {
+            property: 'Requirement.ObjectID',
+            operator: '=',
+            value: story
+        });
+
+        if(cFilter === '') {
+        	return(dFilter);
         } else {
-            app.pointsStore = new Ext.data.ArrayStore({
-                fields: [
-                    'FormattedID',
-                    'Name',
-                    'Start',
-                    'End',
-                    'Points'
-                ]
-            });
-        }    
-    },
-
-    _createPointsGrid: function() {
-        var app = this;
-
-        if(!app.pointsGrid) {
-            app.pointsGrid = new Ext.grid.Panel({
-                store: app.pointsStore,
-                width: Ext.getBody().getViewSize().width,
-                columns: [
-                    {text: 'ID',        dataIndex: 'FormattedID'},       
-                    {text: 'Name',      dataIndex: 'Name',   flex:1},
-                    {text: 'Start',     dataIndex: 'Start'},
-                    {text: 'End',       dataIndex: 'End'},
-                    {text: 'Points',    dataIndex: 'Points'}
-                ],
-                renderTo: Ext.getBody()
-                });
-
-            Ext.EventManager.onWindowResize(function () {
-                var width = Ext.getBody().getViewSize().width;
-                app.pointsGrid.setWidth(width);
-            });
-            
-            app.add(app.pointsGrid);
+        	return(cFilter.or(dFilter));
         }
     },
 
-    _drawPieChart: function() {
-        var app = this;
+    _showGrid: function() {
+    	var app = this;
 
-        if(!app.pieChart) {
-            app.pieChart = new Ext.chart.Chart({
-                width: Ext.getBody().getViewSize().width,
-                height: Ext.getBody().getViewSize().height - 20,
-                animate: true,
-                store: app.pointsStore,
-                renderTo: Ext.getBody(),
-                shadow: true,
-//                legend: {
-//                    position: 'right'
-//                },
-                insetPadding: 25,
-                theme: 'Base:gradients',
-                series: [{
-                    type: 'pie',
-                    field: 'Points',
-//                    showInLegend: true,
-                    tips: {
-                        trackMouse: true,
-                        width: 300,
-                        height: 29,
-                        bodyStyle: {background: 'white'},
-                        renderer: function(storeItem, item) {
-                            var total = 0;
-                            app.pointsStore.each(function(rec) {
-                                total += rec.get('Points');
-                            });
-                            this.setTitle(storeItem.get('Name') + ': ' + Math.round(storeItem.get('Points') / total * 100) + '%');
-                        }
-                    },
-                    highlight: {
-                        segment: {
-                            margin: 20
-                        }
-                    },
-                    label: {
-                        field: 'Name'
-//                        display: 'rotate',
-//                        font: '8px Arial'
-                    },
-                    animate: true
-                }]
-            });
+    	app.reportStore.each(function(record) {
+            var item = record.get('ObjectID');
+            var id = record.get('FormattedID');
+            var name = record.get('Name');
 
-            Ext.EventManager.onWindowResize(function () {
-                var width = Ext.getBody().getViewSize().width;
-                var height = Ext.getBody().getViewSize().height - 20;
-                app.pieChart.setSize(width, height);
-            });
-
-            app.add(app.pieChart);
-        }
-    } 
+        	console.log(item, id, name);
+        });
+    }
 });
