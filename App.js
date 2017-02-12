@@ -19,10 +19,6 @@ Ext.define('CustomApp', {
         app._getReportType();
 
         app._setReleaseDate();
-
-//        if (app.getSetting("type") !== "")  {
-//            app._loadData();
-//        } 
     },
 
     getSettingsFields: function() {
@@ -39,7 +35,6 @@ Ext.define('CustomApp', {
 
     _getReportType: function() {
         var app = this;
-        console.log("here");
 
 		var reportOptions = Ext.create('Ext.data.Store', {
     		fields: ['abbr', 'name'],
@@ -58,7 +53,11 @@ Ext.define('CustomApp', {
     		forceSelection: 'true',
     		displayField: 'name',
     		valueField: 'abbr',
-    		renderTo: Ext.getBody()
+    		renderTo: Ext.getBody(),
+    		listeners: {
+                select: app._loadData,
+                scope: app
+                }                
 		});
         app.down('#filter-Box').add(reportTypeField);
     },
@@ -167,6 +166,19 @@ Ext.define('CustomApp', {
 
         });
 
+        console.log('Stories matched', app.itemStore.getTotalCount());
+
+        if(app.itemStore.getTotalCount() === 0) {
+        	console.log('No Entries');
+
+        	if(app.resultsGrid) {
+        		app.remove(app.resultsGrid);
+        		app.resultsGrid = null;
+//        		app._showGrid();
+        	}
+        	return;
+        }
+
         console.log(storyList);
         app.reportStore = Ext.create('Rally.data.wsapi.Store', {
             model: app.reportType,
@@ -175,8 +187,8 @@ Ext.define('CustomApp', {
             limit: Infinity, 
             listeners: {
                 load: function(myStore, myData, success) {
-                	console.log(myStore);
-                	if(!app.resultsGrid) {
+                	console.log('Deciding whether to show grid');
+                	if(!app.resultsGrid || app.resultsGrid === null) {
                     	app._showGrid();
                 	}
                 },
@@ -206,13 +218,15 @@ Ext.define('CustomApp', {
     _showGrid: function() {
     	var app = this;
 
-    	app.reportStore.each(function(record) {
-            var item = record.get('ObjectID');
-            var id = record.get('FormattedID');
-            var name = record.get('Name');
+//    	app.reportStore.each(function(record) {
+//            var item = record.get('ObjectID');
+//            var id = record.get('FormattedID');
+//            var name = record.get('Name');
 
-        	console.log(item, id, name);
-        });
+//        	console.log(item, id, name);
+//        });
+
+		console.log('Show Grid');
 
         app.resultsGrid = Ext.create('Rally.ui.grid.Grid', {
         	store: app.reportStore,
