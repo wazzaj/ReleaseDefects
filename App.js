@@ -175,9 +175,10 @@ Ext.define('CustomApp', {
             limit: Infinity, 
             listeners: {
                 load: function(myStore, myData, success) {
-                	console.log('Store Created');
                 	console.log(myStore);
-                    app._showGrid();
+                	if(!app.ResultsGrid) {
+                    	app._showGrid();
+                	}
                 },
                 scope: app    
             },
