@@ -212,5 +212,15 @@ Ext.define('CustomApp', {
 
         	console.log(item, id, name);
         });
+
+        app.resultsGrid = Ext.create('Rally.ui.grid.Grid', {
+        	store: app.reportStore,
+        	columnCfgs: [         // Columns to display; must be the same names specified in the fetch: above in the wsapi data store
+          		'FormattedID', 'Name', 'Requirement.FormattedID'
+        	]
+      	});
+
+      	app.add(app.resultsGrid);       // add the grid Component to the app-level Container (by doing this.add, it uses the app container)
+
     }
 });
