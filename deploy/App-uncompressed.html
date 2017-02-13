@@ -30,40 +30,28 @@
         app._setReleaseDate();
     },
 
-    getSettingsFields: function() {
-        var values = [
-            {
-                name: 'type',
-                xtype: 'rallytextfield',
-                label : "Defects or Test Cases"
-            }
-        ];
-
-        return values;
-    },
-
     _getReportType: function() {
         var app = this;
 
 		var reportOptions = Ext.create('Ext.data.Store', {
-    		fields: ['model', 'name'],
-    		data : [
-       			{"model":"Defect", "name":"Defects"},
-        		{"model":"Test Case", "name":"Test Cases"}
-	    		]
-		});
+            fields: ['model', 'name'],
+            data : [
+                {"model":"Defect", "name":"Defects"},
+                {"model":"Test Case", "name":"Test Cases"}
+            ]
+        });
 
 		// Create the combo box, attached to the states data store
 		var reportTypeField = Ext.create('Ext.form.ComboBox', {
-    		itemId: 'type-Filter',
-    		fieldLabel: 'Choose Report',
-    		store: reportOptions,
-    		queryMode: 'local',
-    		forceSelection: 'true',
-    		displayField: 'name',
-    		valueField: 'model',
-    		renderTo: Ext.getBody(),
-    		listeners: {
+            itemId: 'type-Filter',
+            fieldLabel: 'Choose Report',
+            store: reportOptions,
+            queryMode: 'local',
+            forceSelection: 'true',
+            displayField: 'name',
+            valueField: 'model',
+            renderTo: Ext.getBody(),
+            listeners: {
                 select: app._changeType,
                 scope: app
                 }                
@@ -96,14 +84,14 @@
     },
 
     _changeType: function() {
-    	var app = this;
+        var app = this;
 
-    	if(app.resultsGrid) {
-        	app.remove(app.resultsGrid);
-        	app.resultsGrid = null;
+        if(app.resultsGrid) {
+            app.remove(app.resultsGrid);
+            app.resultsGrid = null;
         }
 
-    	app._loadData();
+        app._loadData();
     },
 
     _loadData: function() {
@@ -131,7 +119,7 @@
 
     _setStoryFilter: function(rDate,aType) {
 
-    	var rFilter1 = Ext.create('Rally.data.wsapi.Filter', {
+        var rFilter1 = Ext.create('Rally.data.wsapi.Filter', {
             property: 'c_ReleaseDate',
             operator: '>=',
             value: rDate
@@ -148,17 +136,17 @@
         var rFilter = '';
 
         if (aType === 'Defect') {
-        	rFilter3 = Ext.create('Rally.data.wsapi.Filter', {
-            	property: 'Defects.ObjectID',
-            	operator: '!=',
-            	value: 'null'
-        	});
+            rFilter3 = Ext.create('Rally.data.wsapi.Filter', {
+                property: 'Defects.ObjectID',
+                operator: '!=',
+                value: 'null'
+            });
         } else {
             rFilter3 = Ext.create('Rally.data.wsapi.Filter', {
-            	property: 'TestCases.ObjectID',
-            	operator: '!=',
-            	value: 'null'
-        	});	
+                property: 'TestCases.ObjectID',
+                operator: '!=',
+                value: 'null'
+            });	
         }
 
         return rFilter1.and(rFilter2).and(rFilter3);
@@ -171,21 +159,19 @@
 
         app.itemStore.each(function(record) {
             var item = record.get('ObjectID');
-
-        	storyList = app._setFilter(item, storyList);
-
+            storyList = app._setFilter(item, storyList);
         });
 
         console.log('Stories matched', app.itemStore.getTotalCount());
 
         if(app.itemStore.getTotalCount() === 0) {
-        	console.log('No Entries');
+            console.log('No Entries');
 
-        	if(app.resultsGrid) {
-        		app.remove(app.resultsGrid);
-        		app.resultsGrid = null;
-        	}
-        	return;
+            if(app.resultsGrid) {
+                app.remove(app.resultsGrid);
+                app.resultsGrid = null;
+            }
+            return;
         }
 
         app.reportStore = Ext.create('Rally.data.wsapi.Store', {
@@ -195,9 +181,9 @@
             limit: Infinity, 
             listeners: {
                 load: function(myStore, myData, success) {
-                	if(!app.resultsGrid || app.resultsGrid === null) {
-                    	app._showGrid();
-                	}
+                    if(!app.resultsGrid || app.resultsGrid === null) {
+                        app._showGrid();
+                    }
                 },
                 scope: app    
             },
@@ -207,38 +193,40 @@
     },
 
     _setFilter: function(story, cFilter) {
-    	var app = this;
+        var app = this;
 
-    	if(app.reportType === 'Defect') {
-    		var queryProp = 'Requirement.ObjectID';
-    	} else {
-    		var queryProp = 'WorkProduct.ObjectID';
-    	}
+        var queryProp = '';
 
-    	var dFilter = Ext.create('Rally.data.wsapi.Filter', {
+        if(app.reportType === 'Defect') {
+            queryProp = 'Requirement.ObjectID';
+        } else {
+            queryProp = 'WorkProduct.ObjectID';
+        }
+
+        var dFilter = Ext.create('Rally.data.wsapi.Filter', {
             property: queryProp,
             operator: '=',
             value: story
         });
 
         if(cFilter === '') {
-        	return(dFilter);
+            return(dFilter);
         } else {
-        	return(cFilter.or(dFilter));
+            return(cFilter.or(dFilter));
         }
     },
 
     _showGrid: function() {
-    	var app = this;
+        var app = this;
 
         app.resultsGrid = Ext.create('Rally.ui.grid.Grid', {
-        	store: app.reportStore,
-        	columnCfgs: [         // Columns to display; must be the same names specified in the fetch: above in the wsapi data store
-          		'FormattedID', 'Name', 'Owner', 'Project'
-        	]
-      	});
+            store: app.reportStore,
+            columnCfgs: [         // Columns to display; must be the same names specified in the fetch: above in the wsapi data store
+                'FormattedID', 'Name', 'Owner', 'Project'
+            ]
+        });
 
-      	app.add(app.resultsGrid);       // add the grid Component to the app-level Container (by doing this.add, it uses the app container)
+        app.add(app.resultsGrid);       // add the grid Component to the app-level Container (by doing this.add, it uses the app container)
     }
 });
 
