@@ -22,6 +22,13 @@ Ext.define('CustomApp', {
     _setReleaseDate: function() {
         var app = this; 
 
+        app.down('#exportBtn').add({
+            xtype: 'rallybutton',
+            text: 'Export to Excel',
+            handler: this._onClickExport,
+            visible: false
+        });
+
 //        var d = Ext.Date.add(new Date(), Ext.Date.DAY, 0);
 //        app.startDate = Ext.Date.clearTime(d);
 
