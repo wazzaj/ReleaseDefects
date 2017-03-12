@@ -10,7 +10,6 @@
                 Ext.define('CustomApp', {
     extend: 'Rally.app.App',
     componentCls: 'app',
-
     items: [
         {
         xtype: 'container',
@@ -31,9 +30,6 @@
     _setReleaseDate: function() {
         var app = this; 
 
-//        var d = Ext.Date.add(new Date(), Ext.Date.DAY, 0);
-//        app.startDate = Ext.Date.clearTime(d);
-
         var releaseDateField = Ext.create('Ext.Container', {
             items: [{
                 itemId: 'release-Date',
@@ -44,7 +40,6 @@
                     select: app._loadData,
                     scope: app
                     }                  
-//                value: app.startDate
             }],
             renderTo: Ext.getBody().dom
         });
@@ -120,21 +115,27 @@
             app.defectStore.setFilter(storyList);
             app.defectStore.load();
         } else {
-            app.defectStore = Ext.create('Rally.data.wsapi.Store', {
-                model: 'Defect',
+            console.log('Create defect store');
+            app.defectStore = Ext.create('Rally.data.wsapi.TreeStoreBuilder').build({
+                models: ['defect'],
                 autoLoad: true,
+                enableHierarchy: true,
                 filters: storyList,
                 limit: Infinity, 
-                listeners: {
-                    load: function(myStore, myData, success) {
-                        if(!app.defectGrid) {
-                            app._createGrid(myStore);
-                        }
-                    },
-                    scope: app    
-                },
-                fetch: ['FormattedID', 'Name', 'Owner', 'Project', 'Requirement', 'State', 'ScheduleState', 'Severity', 'Priority'],
-                hydrate: ['Requirement']
+                fetch: [
+                    'FormattedID', 
+                    'Name', 
+                    'Owner', 
+                    'Project', 
+                    'Requirement', 
+                    'State', 
+                    'ScheduleState', 
+                    'Severity', 
+                    'Priority'
+                ]
+            }).then({
+                success: this._createGrid,
+                scope: app
             });
         }
     },
@@ -155,17 +156,54 @@
         }
     },
 
-    _createGrid: function(myDefectStore) {
+    _createGrid: function(store) {
         var app = this;
 
-        app.defectGrid = Ext.create('Rally.ui.grid.Grid', {
-            store: myDefectStore,
-            columnCfgs: [         // Columns to display; must be the same names specified in the fetch: above in the wsapi data store
-                'FormattedID', 'Name', 'Owner', 'Project', 'Requirement', 'State', 'ScheduleState', 'Severity', 'Priority'
-            ]
-        });
+        console.log('Create Grid');
 
-        app.add(app.defectGrid);    // add the grid Component to the app-level Container (by doing this.add, it uses the app container)
+        var modelNames = ['defect'],
+            context = app.getContext();
+                    
+        app.add({
+            xtype: 'rallygridboard',
+            context: context,
+            modelNames: modelNames,
+            toggleState: 'grid',
+            stateful: false,
+            plugins: [
+                {
+                    ptype: 'rallygridboardactionsmenu',
+                    menuItems: [
+                        {
+                            text: 'Export...',
+                            handler: function() {
+                                window.location = Rally.ui.gridboard.Export.buildCsvExportUrl(
+                                    app.down('rallygridboard').getGridOrBoard());
+                            },
+                            scope: app
+                        }
+                    ],
+                    buttonConfig: {
+                        iconCls: 'icon-export'
+                    }
+                }
+            ],
+            gridConfig: {
+                store: store,
+                columnCfgs: [
+                    'FormattedID', 
+                    'Name', 
+                    'Owner', 
+                    'Project', 
+                    'Requirement', 
+                    'State', 
+                    'ScheduleState', 
+                    'Severity', 
+                    'Priority'
+                ]
+            },
+            height: app.getHeight()
+        });
     }
 });
 
