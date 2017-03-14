@@ -102,41 +102,29 @@ Ext.define('CustomApp', {
             storyList = app._setFilter('000000000', storyList);
         }
         
-//        if(app.defectStore) {
-//            app.defectStore.setFilter(storyList);
-//            app.defectStore.load();
-//        } else {
-
-//        if(app.defectStore) {
-//            app.defectStore.removeAll();
-            console.log(storyList);
-//        }
-
-        console.log('Create defect store');
-            Ext.create('Rally.data.wsapi.TreeStoreBuilder').build({
-                models: ['defect'],
-                autoLoad: true,
-                enableHierarchy: true,
-                filters: storyList,
-                limit: Infinity, 
-                fetch: [
-                    'FormattedID', 
-                    'Name', 
-                    'Owner', 
-                    'Project', 
-                    'Requirement', 
-                    'State', 
-                    'ScheduleState', 
-                    'Severity', 
-                    'Priority'
-                ]
-            }).then({
-                success: function(store) {
-                    this._createGrid(store);
-                },
-                scope: app
-            });
-  //      }
+        Ext.create('Rally.data.wsapi.TreeStoreBuilder').build({
+            models: ['defect'],
+            autoLoad: true,
+            enableHierarchy: true,
+            filters: storyList,
+            limit: Infinity, 
+            fetch: [
+                'FormattedID', 
+                'Name', 
+                'Owner', 
+                'Project', 
+                'Requirement', 
+                'State', 
+                'ScheduleState', 
+                'Severity', 
+                'Priority'
+            ]
+        }).then({
+            success: function(store) {
+                this._createGrid(store);
+            },
+            scope: app
+        });
     },
 
     _setFilter: function(story, cFilter) {
@@ -158,15 +146,15 @@ Ext.define('CustomApp', {
     _createGrid: function(store) {
         var app = this;
 
-        console.log('Create Grid');
-        console.log(store);
-
         var modelNames = ['defect'],
             context = app.getContext();
+
+        app.remove('gridboard');
                     
         app.add({
             xtype: 'rallygridboard',
             context: context,
+            itemId: 'gridboard',
             modelNames: modelNames,
             toggleState: 'grid',
             stateful: false,
