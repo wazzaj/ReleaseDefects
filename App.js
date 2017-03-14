@@ -102,12 +102,18 @@ Ext.define('CustomApp', {
             storyList = app._setFilter('000000000', storyList);
         }
         
-        if(app.defectStore) {
-            app.defectStore.setFilter(storyList);
-            app.defectStore.load();
-        } else {
-            console.log('Create defect store');
-            app.defectStore = Ext.create('Rally.data.wsapi.TreeStoreBuilder').build({
+//        if(app.defectStore) {
+//            app.defectStore.setFilter(storyList);
+//            app.defectStore.load();
+//        } else {
+
+//        if(app.defectStore) {
+//            app.defectStore.removeAll();
+            console.log(storyList);
+//        }
+
+        console.log('Create defect store');
+            Ext.create('Rally.data.wsapi.TreeStoreBuilder').build({
                 models: ['defect'],
                 autoLoad: true,
                 enableHierarchy: true,
@@ -125,10 +131,12 @@ Ext.define('CustomApp', {
                     'Priority'
                 ]
             }).then({
-                success: this._createGrid,
+                success: function(store) {
+                    this._createGrid(store);
+                },
                 scope: app
             });
-        }
+  //      }
     },
 
     _setFilter: function(story, cFilter) {
@@ -151,6 +159,7 @@ Ext.define('CustomApp', {
         var app = this;
 
         console.log('Create Grid');
+        console.log(store);
 
         var modelNames = ['defect'],
             context = app.getContext();
@@ -169,9 +178,9 @@ Ext.define('CustomApp', {
                             text: 'Export...',
                             handler: function() {
                                 window.location = Rally.ui.gridboard.Export.buildCsvExportUrl(
-                                    app.down('rallygridboard').getGridOrBoard());
+                                    this.down('rallygridboard').getGridOrBoard());
                             },
-                            scope: app
+                            scope: this
                         }
                     ],
                     buttonConfig: {
@@ -193,7 +202,7 @@ Ext.define('CustomApp', {
                     'Priority'
                 ]
             },
-            height: app.getHeight()
+            height: this.getHeight()
         });
     }
 });
