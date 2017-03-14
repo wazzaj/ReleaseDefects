@@ -15,12 +15,6 @@ Ext.define('CustomApp', {
     launch: function() {
         var app = this;
 
-        app._setReleaseDate();
-    },
-
-    _setReleaseDate: function() {
-        var app = this; 
-
         var releaseDateField = Ext.create('Ext.Container', {
             items: [{
                 itemId: 'release-Date',
